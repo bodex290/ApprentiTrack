@@ -7,7 +7,17 @@ from chatbot import llm_call
 st.set_page_config(page_title="LiteLLM Chatbot 🤖", page_icon="💬")
 st.title("LiteLLM Chatbot 🤖")
 
-# Sidebar: instructions and chat history
+# --- Conversation Management ---
+if "conversations" not in st.session_state:
+    st.session_state.conversations = [
+        [{"role": "system", "content": "You are a helpful assistant."}]
+    ]
+if "selected_chat" not in st.session_state:
+    st.session_state.selected_chat = 0
+if "chat_titles" not in st.session_state:
+    st.session_state.chat_titles = [""]  # Empty title for each chat
+
+# Sidebar: Chat selection and new chat button
 with st.sidebar:
     st.header("💡 How to use")
     st.markdown(
@@ -20,25 +30,38 @@ with st.sidebar:
     st.markdown("---")
     st.write("Powered by Azure OpenAI & Streamlit")
     st.markdown("---")
-    st.subheader("🗨️ Chat History")
-    if "messages" in st.session_state:
-        for msg in st.session_state.messages[1:]:
-            role = "🧑‍💻 You" if msg["role"] == "user" else "🤖 Assistant"
-            st.markdown(f"**{role}:** {msg['content']}")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": "You are a helpful assistant."}
+    st.subheader("🗨️ Conversations")
+    # Show "New Chat" for empty titles, or the title if set
+    chat_titles = [
+        title if title else "New Chat" for title in st.session_state.chat_titles
     ]
+    selected = st.radio(
+        "Select a conversation", chat_titles, index=st.session_state.selected_chat
+    )
+    if st.button("➕ New Chat"):
+        st.session_state.conversations.append(
+            [{"role": "system", "content": "You are a helpful assistant."}]
+        )
+        st.session_state.chat_titles.append("")
+        st.session_state.selected_chat = len(st.session_state.conversations) - 1
+        st.stop()
+    st.session_state.selected_chat = chat_titles.index(selected)
+    st.markdown("---")
+    st.subheader("🗨️ Chat History")
+    messages = st.session_state.conversations[st.session_state.selected_chat]
+    for msg in messages[1:]:
+        role = "🧑‍💻 You" if msg["role"] == "user" else "🤖 Assistant"
+        st.markdown(f"**{role}:** {msg['content']}")
 
+# --- Main Chat Area ---
+messages = st.session_state.conversations[st.session_state.selected_chat]
 user_input = st.chat_input("Type your message here...")
 
-# If user sends a message, append it and get assistant reply
 if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    messages.append({"role": "user", "content": user_input})
 
     # Show all previous messages
-    for msg in st.session_state.messages[1:]:
+    for msg in messages[1:]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
@@ -51,7 +74,7 @@ if user_input:
         progress_bar.progress(90, text="✨ Finalizing response...")
         prompt = "\n".join(
             f"{msg['role'].capitalize()}: {msg['content']}"
-            for msg in st.session_state.messages
+            for msg in messages
             if msg["role"] != "system"
         )
         reply = llm_call(prompt, user_input)
@@ -59,10 +82,22 @@ if user_input:
         time.sleep(0.3)
         progress_bar.empty()
         st.markdown(reply)
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+    messages.append({"role": "assistant", "content": reply})
+
+    # --- Generate a title for the chat if it's still empty ---
+    chat_idx = st.session_state.selected_chat
+    if st.session_state.chat_titles[chat_idx] == "":
+        # Use the user's first message to generate a title
+        title_prompt = (
+            "Generate a short, descriptive title (max 5 words) for this conversation:\n"
+            f"User: {user_input}\nAssistant: {reply}\nTitle:"
+        )
+        title = llm_call(title_prompt, user_input)
+        # Clean up the title (optional: take only the first line)
+        st.session_state.chat_titles[chat_idx] = title.strip().split("\n")[0]
 
 else:
     # On initial load or after response, show full conversation
-    for msg in st.session_state.messages[1:]:
+    for msg in messages[1:]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
