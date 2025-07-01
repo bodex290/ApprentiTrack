@@ -44,3 +44,12 @@ Once the application is running, you can interact with the chatbot through the w
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue for any suggestions or improvements.
+
+## Run with Docker Compose
+
+1. Copy your `.env` file to this directory.
+2. Build and start the app:
+   ```sh
+   docker compose up --build
+   ```
+3. Visit [http://localhost:8501](http://localhost:8501)

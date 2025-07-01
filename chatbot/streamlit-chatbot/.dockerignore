@@ -1,0 +1,7 @@
+# Ignore these files and directories
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
