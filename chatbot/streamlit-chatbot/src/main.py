@@ -1,6 +1,8 @@
-import streamlit as st
-from chatbot import llm_call
 import time
+
+import streamlit as st
+
+from chatbot import llm_call
 
 st.set_page_config(page_title="LiteLLM Chatbot 🤖", page_icon="💬")
 st.title("LiteLLM Chatbot 🤖")
@@ -25,7 +27,9 @@ with st.sidebar:
             st.markdown(f"**{role}:** {msg['content']}")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    st.session_state.messages = [
+        {"role": "system", "content": "You are a helpful assistant."}
+    ]
 
 user_input = st.chat_input("Type your message here...")
 
@@ -47,7 +51,8 @@ if user_input:
         progress_bar.progress(90, text="✨ Finalizing response...")
         prompt = "\n".join(
             f"{msg['role'].capitalize()}: {msg['content']}"
-            for msg in st.session_state.messages if msg['role'] != "system"
+            for msg in st.session_state.messages
+            if msg["role"] != "system"
         )
         reply = llm_call(prompt, user_input)
         progress_bar.progress(100, text="✅ Done!")
