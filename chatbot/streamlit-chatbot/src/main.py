@@ -49,12 +49,7 @@ if user_input:
             time.sleep(0.05)
             progress_bar.progress(percent, text="🤔 Thinking...")
         progress_bar.progress(90, text="✨ Finalizing response...")
-        prompt = "\n".join(
-            f"{msg['role'].capitalize()}: {msg['content']}"
-            for msg in st.session_state.messages
-            if msg["role"] != "system"
-        )
-        reply = llm_call(prompt, user_input)
+        reply = llm_call(st.session_state.messages)
         progress_bar.progress(100, text="✅ Done!")
         time.sleep(0.3)
         progress_bar.empty()
