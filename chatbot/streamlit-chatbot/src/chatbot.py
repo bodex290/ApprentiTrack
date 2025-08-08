@@ -12,12 +12,18 @@ client = openai.OpenAI(
 )
 
 
-def llm_call(prompt, content):
+def llm_call(messages):
+    """Send the entire conversation to the LLM and return its reply.
+
+    Parameters
+    ----------
+    messages: list[dict]
+        A list of messages in the OpenAI chat format containing the
+        conversation history, including the system prompt.
+    """
+
     response = client.chat.completions.create(
         model="azure.gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant"},
-            {"role": "user", "content": f"{prompt}:{content}"},
-        ],
+        messages=messages,
     )
     return response.choices[0].message.content
