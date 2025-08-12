@@ -54,7 +54,7 @@ if user_input:
             for msg in st.session_state.messages
             if msg["role"] != "system"
         )
-        reply = llm_call(prompt, user_input)
+        reply = llm_call(prompt)
         progress_bar.progress(100, text="✅ Done!")
         time.sleep(0.3)
         progress_bar.empty()

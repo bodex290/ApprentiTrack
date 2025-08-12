@@ -12,12 +12,12 @@ client = openai.OpenAI(
 )
 
 
-def llm_call(prompt, content):
+def llm_call(prompt: str) -> str:
     response = client.chat.completions.create(
         model="azure.gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful assistant"},
-            {"role": "user", "content": f"{prompt}:{content}"},
+            {"role": "user", "content": prompt},
         ],
     )
     return response.choices[0].message.content
