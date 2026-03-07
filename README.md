@@ -5,7 +5,7 @@
 
 
 - 🔭 I’m currently working on building a GitHub repository
-- 🌱 I’m currently learning JavaScript
+- 🌱 I’m currently learning Python + JavaScript
 - 💬 Ask me about anything
 - 📫 How to reach me: samuelojeiwa290@gmail.com
 - 😄 Pronouns: Money/Maker
