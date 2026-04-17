@@ -605,4 +605,4 @@ Set `VITE_API_URL` in the Vercel project settings to point to the deployed backe
 
 ## License
 
-This project is for educational purposes as part of the IOT552U module.
+This project is for educational purposes as part of the IOT552U module
