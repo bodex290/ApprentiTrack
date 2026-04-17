@@ -38,6 +38,15 @@ origins = [
     os.getenv("CORS_ORIGIN", "http://localhost:5173"),
 ]
 
+# In production (Vercel), also allow the deployment URL and preview URLs
+_vercel_url = os.getenv("VERCEL_URL")          # e.g. my-app-abc123.vercel.app
+_vercel_project = os.getenv("VERCEL_PROJECT_PRODUCTION_URL")  # e.g. my-app.vercel.app
+if _vercel_url:
+    origins.append(f"https://{_vercel_url}")
+if _vercel_project:
+    origins.append(f"https://{_vercel_project}")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

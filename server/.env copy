@@ -1,0 +1,10 @@
+# DATABASE_URL uses default from database.py (absolute path)
+PORT=8001
+CORS_ORIGIN=http://localhost:5173
+
+# LLM Configuration
+# Azure OpenAI proxy (PwC shared service)
+AZURE_API_KEY=sk-eGGNul3YhANk-s4-VHmWgw
+AZURE_BASE_URL=https://genai-sharedservice-emea.pwc.com
+LLM_MODEL=openai/azure.gpt-4o-mini
+SSL_VERIFY=false

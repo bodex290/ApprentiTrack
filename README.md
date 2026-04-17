@@ -591,15 +591,104 @@ npx playwright test
 
 ---
 
-## Deployment
+## Deployment (Vercel)
 
-| Component | Recommended Platforms          |
-| --------- | ----------------------------- |
-| Frontend  | Vercel                        |
-| Backend   | Railway, Render, or Fly.io    |
-| Database  | Hosted SQLite (e.g. Turso)    |
+ApprentiTrack is configured for full-stack deployment on **Vercel** — the React frontend is served as static files and the FastAPI backend runs as a Python serverless function.
 
-Set `VITE_API_URL` in the Vercel project settings to point to the deployed backend URL.
+### Prerequisites
+
+1. **Vercel account** — [vercel.com](https://vercel.com)
+2. **Cloud PostgreSQL database** — SQLite won't work on serverless (ephemeral filesystem). Free options:
+
+| Provider   | Free Tier                | Connection String Format                          |
+| ---------- | ------------------------ | ------------------------------------------------- |
+| **Neon**   | 0.5 GB, 1 project       | `postgresql://user:pass@ep-xyz.region.neon.tech/dbname?sslmode=require` |
+| **Supabase** | 500 MB, 2 projects    | `postgresql://postgres:pass@db.xyz.supabase.co:5432/postgres` |
+| **Vercel Postgres** | 256 MB          | Provided automatically via Vercel dashboard       |
+
+### Step-by-Step
+
+#### 1. Create the cloud database
+
+Sign up at [Neon](https://neon.tech) (recommended) or [Supabase](https://supabase.com). Create a new project and copy the **PostgreSQL connection string**.
+
+#### 2. Import to Vercel
+
+```bash
+# Install Vercel CLI (if not already)
+npm i -g vercel
+
+# From the project root
+vercel
+```
+
+Or import via the [Vercel Dashboard](https://vercel.com/new) → "Import Git Repository".
+
+#### 3. Set environment variables
+
+In the Vercel project dashboard → **Settings → Environment Variables**, add:
+
+| Variable            | Value                                    | Required |
+| ------------------- | ---------------------------------------- | -------- |
+| `DATABASE_URL`      | Your PostgreSQL connection string        | Yes      |
+| `SECRET_KEY`        | Random 32+ char string (JWT signing)     | Yes      |
+| `CORS_ORIGIN`       | `https://your-app.vercel.app`            | Yes      |
+| `AZURE_API_KEY`     | Your LLM provider API key               | For AI   |
+| `AZURE_BASE_URL`    | Your Azure proxy URL                     | For AI   |
+| `LLM_MODEL`         | `openai/azure.gpt-4o-mini` (or other)   | For AI   |
+| `SSL_VERIFY`        | `false` (if using corporate proxy)       | For AI   |
+
+> **Tip:** Generate a secure `SECRET_KEY` with: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+
+#### 4. Seed the production database
+
+Set `DATABASE_URL` locally to point to your cloud database, then run:
+
+```bash
+cd server
+DATABASE_URL="postgresql://..." python seeds/seed_full.py
+```
+
+#### 5. Deploy
+
+```bash
+vercel --prod
+```
+
+### How it works
+
+| Component  | Vercel Feature            | Config                     |
+| ---------- | ------------------------- | -------------------------- |
+| Frontend   | Static build (Vite)       | `buildCommand`, `outputDirectory` in `vercel.json` |
+| Backend    | Python Serverless Function | `api/index.py` → imports FastAPI app |
+| Routing    | Rewrites                  | `/api/*` → `api/index` serverless function |
+| Database   | External PostgreSQL        | `DATABASE_URL` env var     |
+
+### Project Structure for Vercel
+
+```
+├── api/
+│   └── index.py              # Serverless entry point (imports server/main.py)
+├── client/                    # React frontend (built by Vercel)
+├── server/                    # FastAPI backend (loaded by api/index.py)
+├── requirements.txt           # Root-level deps for Vercel's Python runtime
+└── vercel.json                # Build + routing configuration
+```
+
+### Local Development (unchanged)
+
+Local development still uses SQLite — no cloud database needed:
+
+```bash
+# Terminal 1: Backend
+cd server
+source .venv/bin/activate   # macOS/Linux
+python -m uvicorn main:app --reload --port 8001
+
+# Terminal 2: Frontend
+cd client
+npm run dev
+```
 
 ---
 

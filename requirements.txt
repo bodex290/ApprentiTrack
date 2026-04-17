@@ -1,0 +1,14 @@
+# Root-level requirements.txt — used by Vercel's Python runtime
+# (mirrors server/requirements.txt with psycopg2-binary for PostgreSQL)
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.6
+sqlalchemy>=2.0.35
+python-dotenv>=1.0.1
+pydantic>=2.9.2
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+python-multipart>=0.0.6
+litellm>=1.40.0
+Psycopg2-binary>=2.9.9

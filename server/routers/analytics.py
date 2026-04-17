@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, distinct
+from sqlalchemy import func, distinct, cast, String, extract
 
-from db.database import get_db
+from db.database import get_db, DATABASE_URL
 from models.models import (
     Apprentice, Cohort, Module, Assessment, KSB,
     EvidenceSubmission, SubmissionKSB, CoachFeedback, InterventionFlag,
@@ -281,8 +281,14 @@ def submission_trends(db: Session = Depends(get_db), current_user: User = _allow
     """Monthly submission counts over time, broken down by status."""
     app_ids = _coach_apprentice_ids(db, current_user)
 
+    # cross-DB month extraction: SQLite uses strftime, PostgresSQL uses to_char
+    if DATABASE_URL.startswith("sqlite"):
+        month_col = func.strftime('%Y-%m', EvidenceSubmission.submitted_at).label('month')
+    else:
+        month_col = func.to_char(EvidenceSubmission.submitted_at, 'YYYY-MM').label('month')
+
     query = db.query(
-        func.strftime('%Y-%m', EvidenceSubmission.submitted_at).label('month'),
+        month_col,
         EvidenceSubmission.status,
         func.count(EvidenceSubmission.id).label('count'),
     )

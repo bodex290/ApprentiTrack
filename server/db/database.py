@@ -1,4 +1,4 @@
-"""Database connection and session configuration (SQLite)."""
+"""Database connection and session configuration (SQLite for dev, PostgreSQL for production)."""
 
 import os
 from pathlib import Path
@@ -12,15 +12,28 @@ load_dotenv()
 _default_db = "sqlite:///" + str(Path(__file__).resolve().parent / "app.db")
 DATABASE_URL = os.getenv("DATABASE_URL", _default_db)
 
-# For SQLite we need check_same_thread=False when used with FastAPI
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+_is_sqlite = DATABASE_URL.startswith("sqlite")
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+# ── Engine configuration ────────────────────────────────
+if _is_sqlite:
+    # SQLite: disable same-thread check for FastAPI async workers
+    connect_args = {"check_same_thread": False}
+    engine = create_engine(DATABASE_URL, connect_args=connect_args)
+else:
+    # PostgreSQL (Neon / Supabase / etc.): connection-pool-friendly settings
+    # Vercel serverless functions are short-lived, so pool_pre_ping avoids stale conns
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=300,
+    )
 
 # Enable foreign-key enforcement and WAL mode for SQLite
 @event.listens_for(engine, "connect")
 def _set_sqlite_pragma(dbapi_conn, _connection_record):
-    if DATABASE_URL.startswith("sqlite"):
+    if _is_sqlite:
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA foreign_keys=ON;")
         cursor.execute("PRAGMA journal_mode=WAL;")     # Better concurrent reads/writes
