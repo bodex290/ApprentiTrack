@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, X, Send, Plus, Trash2, ChevronLeft, Bot, User } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   sendChatMessage,
   getChatConversations,
@@ -187,43 +189,6 @@ export default function ChatBot() {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   };
 
-  // Simple markdown-like rendering (bold, lists)
-  const renderContent = (text: string) => {
-    const lines = text.split('\n');
-    return lines.map((line, i) => {
-      // Bold: **text**
-      const boldified = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Bullet points
-      if (line.match(/^[-•]\s/)) {
-        return (
-          <li key={i} className="ml-4 list-disc" dangerouslySetInnerHTML={{ __html: boldified.replace(/^[-•]\s/, '') }} />
-        );
-      }
-      // Numbered list
-      if (line.match(/^\d+\.\s/)) {
-        return (
-          <li key={i} className="ml-4 list-decimal" dangerouslySetInnerHTML={{ __html: boldified.replace(/^\d+\.\s/, '') }} />
-        );
-      }
-      // Headings (check longest prefix first)
-      if (line.startsWith('#### ')) {
-        return <h5 key={i} className="font-semibold mt-2 mb-1 text-xs uppercase tracking-wide" dangerouslySetInnerHTML={{ __html: boldified.replace(/^####\s/, '') }} />;
-      }
-      if (line.startsWith('### ')) {
-        return <h4 key={i} className="font-semibold mt-2 mb-1 text-sm" dangerouslySetInnerHTML={{ __html: boldified.replace(/^###\s/, '') }} />;
-      }
-      if (line.startsWith('## ')) {
-        return <h3 key={i} className="font-bold mt-3 mb-1" dangerouslySetInnerHTML={{ __html: boldified.replace(/^##\s/, '') }} />;
-      }
-      if (line.startsWith('# ')) {
-        return <h2 key={i} className="font-bold mt-3 mb-1 text-base" dangerouslySetInnerHTML={{ __html: boldified.replace(/^#\s/, '') }} />;
-      }
-      // Empty line
-      if (line.trim() === '') return <br key={i} />;
-      // Normal text
-      return <p key={i} dangerouslySetInnerHTML={{ __html: boldified }} />;
-    });
-  };
 
   return (
     <>
@@ -408,7 +373,11 @@ export default function ChatBot() {
                     }}
                   >
                     {msg.role === 'assistant' ? (
-                      <div className="prose-sm">{renderContent(msg.content)}</div>
+                      <div className="chat-markdown">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       msg.content
                     )}
