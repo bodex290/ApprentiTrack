@@ -1,0 +1,29 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# Docs: https://docs.render.com/blueprint-spec
+
+services:
+  - type: web
+    name: apprentitrack-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # Set manually in Render dashboard
+      - key: SECRET_KEY
+        generateValue: true  # Auto-generate a secure random value
+      - key: CORS_ORIGIN
+        sync: false          # Set to your Vercel frontend URL
+      - key: AZURE_API_KEY
+        sync: false
+      - key: AZURE_BASE_URL
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: SSL_VERIFY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.9"

@@ -3,20 +3,6 @@
   "outputDirectory": "client/dist",
   "framework": null,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" }
-  ],
-  "functions": {
-    "api/index.py": {
-      "runtime": "@vercel/python@4.4.0",
-      "maxDuration": 30
-    }
-  },
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
