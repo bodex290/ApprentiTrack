@@ -112,12 +112,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo credentials hint */}
-        <div className="mt-6 p-3 rounded-lg" style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)' }}>
-          <p className="text-xs text-slate-400 text-center">
-            Coach: <span className="text-slate-300">dr.patel@uni.ac.uk</span> / <span className="text-slate-300">Coach123!</span>
-          </p>
-        </div>
+        {/* Demo credentials hint removed */}
       </div>
     </div>
   );
