@@ -4,6 +4,7 @@ import {
   deleteUser, getCohorts, assignCohorts, getUserCohorts,
 } from '../../services/api';
 import { UserCog, Plus, Pencil, Trash2, Users, GraduationCap } from 'lucide-react';
+import LoadingScreen from '../../components/LoadingScreen';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Modal from '../../components/Modal';
 
@@ -151,7 +152,7 @@ export default function UserManagement() {
     }
   };
 
-  if (loading) return <div className="p-8 text-gray-500">Loading users…</div>;
+  if (loading) return <LoadingScreen message="Loading users..." />;
 
   const filtered = filterRole === 'all' ? users : users.filter(u => u.role === filterRole);
 

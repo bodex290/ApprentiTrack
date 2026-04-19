@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyPortfolio } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { CheckCircle, Clock, Circle, ChevronDown, ChevronRight, FileText, MessageSquare, Plus, BookOpen, Briefcase, Calendar } from 'lucide-react';
 
 interface Evidence {
@@ -42,7 +43,7 @@ export default function MyPortfolio() {
     getMyPortfolio().then(r => setKsbs(r.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-gray-500">Loading portfolio…</div>;
+  if (loading) return <LoadingScreen message="Loading portfolio..." />;
 
   const filtered = ksbs.filter(k =>
     (filterType === 'all' || k.type === filterType) &&

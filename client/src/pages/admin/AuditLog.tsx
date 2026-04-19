@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getAuditLog } from '../../services/api';
 import { ScrollText, ChevronLeft, ChevronRight } from 'lucide-react';
+import LoadingScreen from '../../components/LoadingScreen';
 
 interface AuditEntry {
   id: number;
@@ -94,7 +95,12 @@ export default function AuditLogPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={6} className="text-center py-8">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 border-3 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+                  <span className="text-sm text-slate-400">Loading audit log...</span>
+                </div>
+              </td></tr>
             ) : entries.length === 0 ? (
               <tr><td colSpan={6} className="text-center py-8 text-gray-400">No audit entries found.</td></tr>
             ) : (

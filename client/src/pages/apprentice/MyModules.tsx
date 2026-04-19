@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMyModules } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { BookOpen, Calendar, FileText, ChevronDown, ChevronRight, CheckCircle, Clock, Circle, Target } from 'lucide-react';
 
 interface Assessment {
@@ -79,7 +80,7 @@ export default function MyModules() {
     getMyModules().then(r => setData(r.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-gray-500">Loading modules…</div>;
+  if (loading) return <LoadingScreen message="Loading modules..." />;
   if (!data) return <div className="p-8 text-gray-500">Failed to load modules.</div>;
 
   const { modules, overall_progress } = data;

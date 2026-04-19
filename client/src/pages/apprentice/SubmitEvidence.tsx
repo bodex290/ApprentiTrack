@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getMyModules, getMyKSBs, submitMyEvidence } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Send, CheckCircle, AlertCircle, BookOpen, Briefcase, Search, X, FileText, Link as LinkIcon, Tag } from 'lucide-react';
 
 interface Assessment {
@@ -140,7 +141,7 @@ export default function SubmitEvidence() {
     }
   };
 
-  if (loading) return <div className="p-8 text-gray-500">Loading form…</div>;
+  if (loading) return <LoadingScreen message="Loading form..." />;
 
   return (
     <div className="p-6 lg:p-8">

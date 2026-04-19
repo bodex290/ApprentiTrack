@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormInput, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 interface ModuleItem {
   id: number;
@@ -59,11 +60,13 @@ const Modules = () => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = () => {
     getModules()
       .then((res) => setModules(res.data))
-      .catch((err) => console.error('Failed to load modules:', err));
+      .catch((err) => console.error('Failed to load modules:', err))
+      .finally(() => setPageLoading(false));
   };
 
   useEffect(load, []);
@@ -280,6 +283,8 @@ const Modules = () => {
   }
 
   /* ─── List View ─── */
+  if (pageLoading) return <LoadingScreen message="Loading modules..." />;
+  
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>
       <div className="max-w-[1600px] mx-auto">

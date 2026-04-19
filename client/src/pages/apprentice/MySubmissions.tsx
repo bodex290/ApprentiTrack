@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMySubmissions } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { FileText, MessageSquare, Clock, BookOpen, Briefcase, ChevronDown, ChevronRight, Tag } from 'lucide-react';
 
 interface KSBDetail {
@@ -50,7 +51,7 @@ export default function MySubmissions() {
     getMySubmissions().then(r => setSubmissions(r.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-gray-500">Loading submissions…</div>;
+  if (loading) return <LoadingScreen message="Loading submissions..." />;
 
   const filtered = filterStatus === 'all' ? submissions : submissions.filter(s => s.status === filterStatus);
 

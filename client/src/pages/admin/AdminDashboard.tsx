@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSystemStats } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import {
   Users, GraduationCap, BookOpen, Target, FileText,
   AlertTriangle, Shield, ScrollText,
@@ -30,20 +31,7 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-64" />
-          <div className="grid grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen message="Loading admin dashboard..." />;
 
   if (!stats) return <div className="p-8 text-red-500">Failed to load stats.</div>;
 

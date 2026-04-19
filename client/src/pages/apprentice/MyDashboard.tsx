@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMyDashboard } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { TrendingUp, FileText, Target, BookOpen, CheckCircle, Clock, Circle } from 'lucide-react';
 
 interface ModuleSummary {
@@ -37,7 +38,7 @@ export default function MyDashboard() {
     getMyDashboard().then(r => setData(r.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-gray-500">Loading dashboard…</div>;
+  if (loading) return <LoadingScreen message="Loading dashboard..." />;
   if (!data) return <div className="p-8 text-red-500">Failed to load dashboard</div>;
 
   const statCards = [

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormSelect, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 interface Submission {
   id: number;
@@ -54,6 +55,7 @@ const Submissions = () => {
   const [savingFeedback, setSavingFeedback] = useState(false);
   const [deleteFeedbackId, setDeleteFeedbackId] = useState<number | null>(null);
   const [feedbackCounts, setFeedbackCounts] = useState<Record<number, number>>({});
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = (p = page) => {
     getSubmissions({ limit: PAGE_SIZE, offset: p * PAGE_SIZE })
@@ -78,10 +80,12 @@ const Submissions = () => {
   };
 
   useEffect(() => {
-    load(page);
-    getApprentices({ limit: 100 })
-      .then((res) => setApprentices(res.data.items))
-      .catch((err) => console.error('Failed to load apprentices:', err));
+    Promise.all([
+      load(page),
+      getApprentices({ limit: 100 })
+        .then((res) => setApprentices(res.data.items))
+        .catch((err) => console.error('Failed to load apprentices:', err)),
+    ]).finally(() => setPageLoading(false));
   }, [page]);
 
   const getApprenticeName = (id: number) => {
@@ -154,6 +158,8 @@ const Submissions = () => {
     icon: STATUS_ICONS[s] || FileText,
     color: STATUS_COLORS[s] || '#64748b',
   }));
+
+  if (pageLoading) return <LoadingScreen message="Loading submissions..." />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>

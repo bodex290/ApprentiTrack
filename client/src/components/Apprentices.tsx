@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormInput, FormSelect, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 interface ApprenticeRow {
   id: number;
@@ -36,10 +37,13 @@ const Apprentices = () => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageloading, setPageLoading] = useState(true);
 
   const load = () => {
-    getApprenticeProgress().then((res) => setApprentices(res.data));
-    getCohorts().then((res) => setCohorts(res.data));
+    Promise.all([
+      getApprenticeProgress().then((res) => setApprentices(res.data)),
+      getCohorts().then((res) => setCohorts(res.data)),
+    ]).finally(() => setPageLoading(false));
   };
 
   useEffect(load, []);
@@ -112,6 +116,8 @@ const Apprentices = () => {
     const matchesCohort = !selectedCohort || a.cohort_id === selectedCohort;
     return matchesSearch && matchesCohort;
   });
+
+  if (pageloading) return <LoadingScreen message="Loading apprentices..." />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormInput, FormSelect, FormTextarea, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 interface KSB {
   id: number;
@@ -61,10 +62,13 @@ const KSBCoverage = () => {
   const [filterType, setFilterType] = useState('All');
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = () => {
-    getKSBCoverage().then((res) => setCoverage(res.data));
-    getKSBCoverageByType().then((res) => setTypeSummary(res.data));
+    Promise.all([
+      getKSBCoverage().then((res) => setCoverage(res.data)),
+      getKSBCoverageByType().then((res) => setTypeSummary(res.data)),
+    ]).finally(() => setPageLoading(false));
   };
 
   useEffect(load, []);
@@ -112,6 +116,8 @@ const KSBCoverage = () => {
   const totalKSBs = coverage.length;
   const evidencedKSBs = coverage.filter((k) => k.apprentices_evidenced > 0).length;
   const overallPct = totalKSBs ? Math.round((evidencedKSBs / totalKSBs) * 100) : 0;
+
+  if (pageLoading) return <LoadingScreen message="Loading KSB coverage..." />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormInput, FormSelect, FormTextarea, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 type FilterTab = 'all' | 'open' | 'in_progress' | 'resolved';
 
@@ -60,14 +61,17 @@ const Interventions = () => {
   const [reopenTarget, setReopenTarget] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reopening, setReopening] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = () => {
     getInterventions().then((res) => setInterventions(res.data));
   };
 
   useEffect(() => {
-    load();
-    getApprentices({ limit: 100 }).then((res) => setApprentices(res.data.items));
+    Promise.all([
+      getInterventions().then((res) => setInterventions(res.data)),
+      getApprentices({ limit: 100 }).then((res) => setApprentices(res.data.items)),
+    ]).finally(() => setPageLoading(false));
   }, []);
 
   const getApprenticeName = (id: number) => {
@@ -184,6 +188,8 @@ const Interventions = () => {
     { id: 'in_progress', label: 'In Progress' },
     { id: 'resolved', label: 'Resolved' },
   ];
+
+  if (pageLoading) return <LoadingScreen message="Loading interventions..." />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>

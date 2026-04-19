@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMyFeedback } from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { MessageSquare, FileText, BookOpen, Tag, ChevronDown, ChevronUp, Briefcase } from 'lucide-react';
 
 interface KSBRef {
@@ -47,7 +48,7 @@ export default function MyFeedback() {
 
   const toggle = (id: number) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  if (loading) return <div className="p-8 text-gray-500">Loading feedback…</div>;
+  if (loading) return <LoadingScreen message="Loading feedback..." />;
 
   return (
     <div className="p-8">

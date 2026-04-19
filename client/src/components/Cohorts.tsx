@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { FormField, FormInput, SubmitButton } from './FormFields';
+import LoadingScreen from './LoadingScreen';
 
 interface Cohort {
   id: number;
@@ -27,11 +28,13 @@ const Cohorts = () => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = () => {
     getCohorts()
       .then((res) => setCohorts(res.data))
-      .catch((err) => console.error('Failed to load cohorts:', err));
+      .catch((err) => console.error('Failed to load cohorts:', err))
+      .finally(() => setPageLoading(false));
   };
 
   useEffect(load, []);
@@ -82,6 +85,8 @@ const Cohorts = () => {
       setDeleting(false);
     }
   };
+
+  if (pageLoading) return <LoadingScreen message="Loading cohorts..." />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>
