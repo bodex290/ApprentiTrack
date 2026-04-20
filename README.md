@@ -4,6 +4,11 @@
 
 ---
 
+**Note:**
+The backend API and `/api/docs` (Swagger UI) endpoints are protected and will not display content if accessed directly in the browser. All API access is intended to be via the frontend application or authenticated requests.
+
+---
+
 ## Project Overview
 
 Many apprenticeship programmes rely on platforms like Smart Assessor for administrative tasks but lack robust tools for tracking **KSB competency coverage**. ApprentiTrack provides a relational data system and web dashboard that integrates apprenticeship progress data with structured KSB tracking across three role-based portals, enhanced with **AI-powered analytics and a contextual chatbot**.
@@ -12,8 +17,9 @@ Many apprenticeship programmes rely on platforms like Smart Assessor for adminis
 | -------- | --------------------------------------- | ------------ |
 | Frontend | React 18, TypeScript, Vite, Recharts, Tailwind CSS | `/client` |
 | Backend  | Python 3.10+, FastAPI, SQLAlchemy 2.0, Pydantic v2 | `/server` |
-| Database | SQLite (WAL mode, foreign keys enabled) | `/server/db` |
-| AI / LLM | LiteLLM → Azure OpenAI / OpenAI / Custom proxy    | `/server/services` |
+| Database | PostgreSQL (Neon, production) / SQLite (local dev) | `/server/db` |
+| AI / LLM | OpenAI SDK → Azure OpenAI / OpenAI / Custom proxy  | `/server/services` |
+| Hosting  | Vercel (frontend) + Render (backend) + Neon (DB)    | Config files |
 | Testing  | Pytest (backend), Vitest + RTL (frontend), Playwright (E2E) | Various |
 
 **All data in this project is synthetic and created solely for demonstration purposes.**
@@ -49,10 +55,10 @@ ApprentiTrack is a **three-portal application** with role-based access control a
 │  │ (JWT)  │ │ Routers  │ │ (13 endpt)│ │                │  │
 │  └────────┘ └──────────┘ └───────────┘ └────────────────┘  │
 │  ┌──────────────────┐  ┌────────────────────────────────┐   │
-│  │  AI Chat (4 endpt)│  │ LLM Service (LiteLLM → Azure) │  │
+│  │  AI Chat (4 endpt)│  │ LLM Service (OpenAI SDK→Azure)│   │
 │  └──────────────────┘  └────────────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────┤
-│          SQLAlchemy ORM → SQLite (15 tables, 3NF)           │
+│   SQLAlchemy ORM → PostgreSQL (prod) / SQLite (local dev)   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -195,7 +201,7 @@ ApprentiTrack is a **three-portal application** with role-based access control a
 ```
 ├── client/                       # React + TypeScript + Vite frontend
 │   ├── src/
-│   │   ├── components/           # 12 shared components (Dashboard, ChatBot, Modal, etc.)
+│   │   ├── components/           # 13 shared components (Dashboard, ChatBot, LoadingScreen, etc.)
 │   │   ├── context/              # AuthContext (JWT state management)
 │   │   ├── layouts/              # AdminLayout, CoachLayout, ApprenticeLayout
 │   │   ├── pages/
@@ -208,7 +214,7 @@ ApprentiTrack is a **three-portal application** with role-based access control a
 │
 ├── server/                       # Python + FastAPI backend
 │   ├── db/
-│   │   ├── database.py           # SQLAlchemy engine (SQLite, WAL mode)
+│   │   ├── database.py           # SQLAlchemy engine (PostgreSQL / SQLite)
 │   │   └── schema.sql            # Reference DDL (15 tables)
 │   ├── models/models.py          # 15 SQLAlchemy ORM models
 │   ├── schemas/schemas.py        # Pydantic v2 request/response schemas
@@ -223,7 +229,7 @@ ApprentiTrack is a **three-portal application** with role-based access control a
 │   │   └── ...                   # apprentices, cohorts, modules, ksbs, submissions,
 │   │                             #   interventions, feedback, health
 │   ├── services/
-│   │   └── llm.py                # LiteLLM wrapper (Azure/OpenAI/custom proxy)
+│   │   └── llm.py                # OpenAI SDK wrapper (Azure/OpenAI/custom proxy)
 │   ├── seeds/
 │   │   ├── seed_full.py          # Comprehensive seed (32 users, 80 submissions)
 │   │   ├── seed.sql              # Original SQL seed data
@@ -404,9 +410,9 @@ ApprentiTrack integrates a Large Language Model (LLM) for two features: **chart 
 
 | Feature              | Detail                                                      |
 | -------------------- | ----------------------------------------------------------- |
-| Provider abstraction | LiteLLM wraps Azure OpenAI, OpenAI, or any compatible proxy |
+| Provider abstraction | OpenAI SDK with configurable base URL (Azure, OpenAI, or custom proxy) |
 | Model                | Configurable via `LLM_MODEL` env var (default: `openai/azure.gpt-4o-mini`) |
-| SSL handling         | Supports `SSL_VERIFY=false` for corporate proxies           |
+| SSL handling         | Supports `SSL_VERIFY=false` for corporate proxies (uses `httpx` with verification disabled) |
 | Fallback             | All AI features degrade gracefully if the LLM is unavailable |
 | Functions            | `get_completion()`, `get_chat_completion()`, `get_json_completion()` |
 
@@ -431,7 +437,7 @@ A floating chatbot widget available in all three portals (admin, coach, apprenti
   - **Apprentice**: personal submission history with KSBs and ratings, missing KSB list with descriptions, feedback comments
 - **Role-specific suggested prompts**: pre-loaded question chips based on user role
 - **Persistent conversations**: full history stored in the database, accessible across sessions
-- **Markdown rendering**: tables, headings, bold, bullet points, numbered lists rendered in the chat UI
+- **Markdown rendering**: `react-markdown` + `remark-gfm` renders tables, headings, code blocks, bullet points, and numbered lists in the chat UI
 
 ---
 
@@ -534,7 +540,7 @@ cp .env.example .env
 | -------------- | ------------------------------------------- |
 | Azure Proxy    | `AZURE_API_KEY`, `AZURE_BASE_URL`           |
 | OpenAI Direct  | `OPENAI_API_KEY`                            |
-| Custom Proxy   | `LITELLM_API_KEY`, `LLM_API_BASE`          |
+| Custom Proxy   | `OPENAI_API_KEY` or `AZURE_API_KEY`, `LLM_API_BASE` |
 
 Common settings: `LLM_MODEL` (default: `openai/azure.gpt-4o-mini`), `SSL_VERIFY` (default: `true`).
 
@@ -591,88 +597,124 @@ npx playwright test
 
 ---
 
-## Deployment (Vercel)
+## Deployment
 
-ApprentiTrack is configured for full-stack deployment on **Vercel** — the React frontend is served as static files and the FastAPI backend runs as a Python serverless function.
+ApprentiTrack uses a **split architecture** for production: the React frontend is hosted on **Vercel** as a static site, and the FastAPI backend runs on **Render** as a web service, with **Neon PostgreSQL** as the production database.
 
-### Prerequisites
+```
+┌──────────────┐       HTTPS        ┌──────────────────┐      TCP/SSL      ┌──────────────┐
+│   Vercel     │  ──────────────►   │     Render       │  ──────────────►  │     Neon     │
+│  (Frontend)  │   /api/* calls     │    (Backend)     │   DATABASE_URL    │ (PostgreSQL) │
+│  Static SPA  │                    │  FastAPI + Uvi   │                   │  Cloud DB    │
+│  React+Vite  │  ◄──────────────   │  corn Web Svc    │  ◄──────────────  │              │
+└──────────────┘     JSON responses └──────────────────┘   Query results   └──────────────┘
+```
 
-1. **Vercel account** — [vercel.com](https://vercel.com)
-2. **Cloud PostgreSQL database** — SQLite won't work on serverless (ephemeral filesystem). Free options:
+### Live URLs
 
-| Provider   | Free Tier                | Connection String Format                          |
-| ---------- | ------------------------ | ------------------------------------------------- |
-| **Neon**   | 0.5 GB, 1 project       | `postgresql://user:pass@ep-xyz.region.neon.tech/dbname?sslmode=require` |
-| **Supabase** | 500 MB, 2 projects    | `postgresql://postgres:pass@db.xyz.supabase.co:5432/postgres` |
-| **Vercel Postgres** | 256 MB          | Provided automatically via Vercel dashboard       |
+| Component | URL                                        |
+| --------- | ------------------------------------------ |
+| Frontend  | `https://apprenti-track.vercel.app`        |
+| Backend   | `https://apprentitrack-api.onrender.com`   |
+| API Docs  | `https://apprentitrack-api.onrender.com/docs` |
 
-### Step-by-Step
+> **Note:** The Render free tier spins down after inactivity. The first request after idle may take 30–60 seconds.
+
+### Hosting Architecture
+
+| Component  | Platform | Plan | Config File     | Details                                |
+| ---------- | -------- | ---- | --------------- | -------------------------------------- |
+| Frontend   | Vercel   | Free | `vercel.json`   | Static SPA build, catch-all rewrite to `index.html` |
+| Backend    | Render   | Free | `render.yaml`   | Python web service, `rootDir: server`  |
+| Database   | Neon     | Free | —               | PostgreSQL, 0.5 GB, connection pooling |
+
+### Environment Variables
+
+#### Vercel (Frontend)
+
+| Variable       | Value                                      | Required |
+| -------------- | ------------------------------------------ | -------- |
+| `VITE_API_URL` | `https://apprentitrack-api.onrender.com`   | Yes      |
+
+#### Render (Backend)
+
+| Variable         | Value                                    | Required |
+| ---------------- | ---------------------------------------- | -------- |
+| `DATABASE_URL`   | Neon PostgreSQL connection string        | Yes      |
+| `SECRET_KEY`     | Auto-generated by Render Blueprint       | Yes      |
+| `CORS_ORIGIN`    | `https://apprenti-track.vercel.app`      | Yes      |
+| `AZURE_API_KEY`  | LLM provider API key                     | For AI   |
+| `AZURE_BASE_URL` | Azure proxy URL                          | For AI   |
+| `LLM_MODEL`      | `openai/azure.gpt-4o-mini`              | For AI   |
+| `SSL_VERIFY`     | `false` (if using corporate proxy)       | For AI   |
+
+### Deployment Steps
 
 #### 1. Create the cloud database
 
-Sign up at [Neon](https://neon.tech) (recommended) or [Supabase](https://supabase.com). Create a new project and copy the **PostgreSQL connection string**.
+Sign up at [Neon](https://neon.tech). Create a new project and copy the **PostgreSQL connection string**.
 
-#### 2. Import to Vercel
+#### 2. Deploy the backend on Render
 
-```bash
-# Install Vercel CLI (if not already)
-npm i -g vercel
+1. Go to [Render Dashboard](https://dashboard.render.com) → **New → Blueprint**
+2. Connect your Git repository and select the `render.yaml` file
+3. Or create a **New Web Service** manually:
+   - **Root Directory:** `server`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Set the environment variables listed above in Render's dashboard
 
-# From the project root
-vercel
-```
+#### 3. Seed the production database
 
-Or import via the [Vercel Dashboard](https://vercel.com/new) → "Import Git Repository".
-
-#### 3. Set environment variables
-
-In the Vercel project dashboard → **Settings → Environment Variables**, add:
-
-| Variable            | Value                                    | Required |
-| ------------------- | ---------------------------------------- | -------- |
-| `DATABASE_URL`      | Your PostgreSQL connection string        | Yes      |
-| `SECRET_KEY`        | Random 32+ char string (JWT signing)     | Yes      |
-| `CORS_ORIGIN`       | `https://your-app.vercel.app`            | Yes      |
-| `AZURE_API_KEY`     | Your LLM provider API key               | For AI   |
-| `AZURE_BASE_URL`    | Your Azure proxy URL                     | For AI   |
-| `LLM_MODEL`         | `openai/azure.gpt-4o-mini` (or other)   | For AI   |
-| `SSL_VERIFY`        | `false` (if using corporate proxy)       | For AI   |
-
-> **Tip:** Generate a secure `SECRET_KEY` with: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
-
-#### 4. Seed the production database
-
-Set `DATABASE_URL` locally to point to your cloud database, then run:
+Set `DATABASE_URL` locally to point to your Neon database, then run:
 
 ```bash
 cd server
 DATABASE_URL="postgresql://..." python seeds/seed_full.py
 ```
 
-#### 5. Deploy
+#### 4. Deploy the frontend on Vercel
 
-```bash
-vercel --prod
+1. Import the repository on the [Vercel Dashboard](https://vercel.com/new)
+2. Vercel auto-detects `vercel.json` — builds the React app from `client/`
+3. Set the `VITE_API_URL` environment variable to your Render backend URL
+4. Trigger a redeployment after setting env vars
+
+#### 5. Verify
+
+- Visit the Vercel URL → login with demo credentials
+- Check the Render logs for successful startup
+- Test the AI chatbot and chart analysis features
+
+### Deployment Config Files
+
+**`vercel.json`** — Frontend SPA configuration:
+```json
+{
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
 ```
 
-### How it works
-
-| Component  | Vercel Feature            | Config                     |
-| ---------- | ------------------------- | -------------------------- |
-| Frontend   | Static build (Vite)       | `buildCommand`, `outputDirectory` in `vercel.json` |
-| Backend    | Python Serverless Function | `api/index.py` → imports FastAPI app |
-| Routing    | Rewrites                  | `/api/*` → `api/index` serverless function |
-| Database   | External PostgreSQL        | `DATABASE_URL` env var     |
-
-### Project Structure for Vercel
-
-```
-├── api/
-│   └── index.py              # Serverless entry point (imports server/main.py)
-├── client/                    # React frontend (built by Vercel)
-├── server/                    # FastAPI backend (loaded by api/index.py)
-├── requirements.txt           # Root-level deps for Vercel's Python runtime
-└── vercel.json                # Build + routing configuration
+**`render.yaml`** — Backend Blueprint:
+```yaml
+services:
+  - type: web
+    name: apprentitrack-api
+    runtime: python
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
 ```
 
 ### Local Development (unchanged)
@@ -694,5 +736,4 @@ npm run dev
 
 ## License
 
-This project is for educational purposes as part of the IOT552U module
-
+This project is for educational purposes as part of the IOT552U module.
