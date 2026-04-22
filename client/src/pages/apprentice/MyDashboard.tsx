@@ -136,7 +136,13 @@ export default function MyDashboard() {
               const evPct = m.total_ksbs > 0 ? (m.evidenced_ksbs / m.total_ksbs) * 100 : 0;
               const ipPct = m.total_ksbs > 0 ? (m.in_progress_ksbs / m.total_ksbs) * 100 : 0;
               return (
-                <div key={m.id} className="rounded-lg p-4" style={{ background: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                <div
+                  key={m.id}
+                  onClick={() => navigate(`/my/modules?/module=${m.id}`)}
+                  className="rounded-lg p-4 cursor-pointer transtion-all duration-200 hover:shadow-md hover:border-blue-300"
+                  style={{ background: '#f8fafc', border: '1px solid #e5e7eb' }}
+                  title={`View ${m.code} details`}
+                >
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(59,130,246,0.1)' }}>
                       <BookOpen size={16} style={{ color: '#3b82f6' }} />
