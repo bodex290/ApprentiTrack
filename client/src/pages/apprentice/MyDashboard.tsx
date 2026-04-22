@@ -138,7 +138,7 @@ export default function MyDashboard() {
               return (
                 <div
                   key={m.id}
-                  onClick={() => navigate(`/my/modules?/module=${m.id}`)}
+                  onClick={() => navigate(`/my/modules?module=${m.id}`)}
                   className="rounded-lg p-4 cursor-pointer transtion-all duration-200 hover:shadow-md hover:border-blue-300"
                   style={{ background: '#f8fafc', border: '1px solid #e5e7eb' }}
                   title={`View ${m.code} details`}
