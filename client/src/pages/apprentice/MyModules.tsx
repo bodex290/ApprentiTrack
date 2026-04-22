@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getMyModules } from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 import { BookOpen, Calendar, FileText, ChevronDown, ChevronRight, CheckCircle, Clock, Circle, Target } from 'lucide-react';
@@ -72,12 +73,25 @@ function ProgressBar({ progress }: { progress: Progress }) {
 }
 
 export default function MyModules() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<ModulesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
-    getMyModules().then(r => setData(r.data)).finally(() => setLoading(false));
+    getMyModules().then(r => {
+      setData(r.data);
+      // Auto-expand module from URL query param
+      const moduleParam = searchParams.get('module');
+      if (moduleParam) {
+        const id = Number(moduleParam);
+        if (r.data.modules.some((m: Module) => m.id === id)) {
+          setExpandedId(id);
+        }
+        // Clean up the URL param
+        setSearchParams({}, { replace: true });
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingScreen message="Loading modules..." />;

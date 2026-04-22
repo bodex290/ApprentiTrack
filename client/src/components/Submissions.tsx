@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, Clock, Eye, CheckCircle, Trash2, MessageSquare, Star } from 'lucide-react';
+import { FileText, Clock, Eye, CheckCircle, Trash2, MessageSquare, Star, ChevronDown, Pencil } from 'lucide-react';
 import { getSubmissions, getSubmissionsByStatus, updateSubmission, getApprentices, getFeedback, createFeedback, deleteFeedback } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
@@ -159,7 +159,7 @@ const Submissions = () => {
     color: STATUS_COLORS[s] || '#64748b',
   }));
 
-  if (pageLoading) return <LoadingScreen message="Loading submissions..." />;
+  if (pageLoading) return <LoadingScreen message="Loading submissions…" />;
 
   return (
     <div className="p-8" style={{ background: '#fafafa', minHeight: '100vh' }}>
@@ -230,7 +230,7 @@ const Submissions = () => {
           <table className="w-full">
             <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <tr>
-                {['Title', 'Apprentice', 'Assessment', 'Status', 'Date', 'Feedback'].map((h) => (
+                {['Title', 'Apprentice', 'Assessment', 'Status', 'Date', ...(isCoach ? ['Actions'] : ['Feedback'])].map((h) => (
                   <th key={h} className="text-left px-6 py-4" style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                 ))}
               </tr>
@@ -251,32 +251,16 @@ const Submissions = () => {
                     <span className="px-3 py-1 rounded-full" style={{ background: '#64748b15', color: '#64748b', fontSize: '12px', fontWeight: '500' }}>ASS-{sub.assessment_id}</span>
                   </td>
                   <td className="px-6 py-4">
-                    {isCoach ? (
-                      <button
-                        onClick={() => { setStatusTarget(sub); setNewStatus(''); }}
-                        className="px-3 py-1.5 rounded-full transition-all hover:shadow-sm cursor-pointer"
-                        style={{
-                          background: STATUS_BG[sub.status] || '#64748b15',
-                          color: STATUS_COLORS[sub.status] || '#64748b',
-                          fontSize: '12px', fontWeight: '500', textTransform: 'capitalize',
-                          border: '1px solid transparent',
-                        }}
-                        title="Click to change status"
-                      >
-                        {sub.status}
-                      </button>
-                    ) : (
-                      <span
-                        className="px-3 py-1.5 rounded-full inline-block"
-                        style={{
-                          background: STATUS_BG[sub.status] || '#64748b15',
-                          color: STATUS_COLORS[sub.status] || '#64748b',
-                          fontSize: '12px', fontWeight: '500', textTransform: 'capitalize',
-                        }}
-                      >
-                        {sub.status}
-                      </span>
-                    )}
+                    <span
+                      className="px-3 py-1.5 rounded-full inline-block"
+                      style={{
+                        background: STATUS_BG[sub.status] || '#64748b15',
+                        color: STATUS_COLORS[sub.status] || '#64748b',
+                        fontSize: '12px', fontWeight: '500', textTransform: 'capitalize',
+                      }}
+                    >
+                      {sub.status}
+                    </span>
                   </td>
                   <td className="px-6 py-4" style={{ fontSize: '14px', color: '#64748b' }}>
                     {sub.submitted_at
@@ -286,16 +270,59 @@ const Submissions = () => {
                         : '—'}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-1">
-                      <button onClick={() => openFeedbackModal(sub)} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-amber-50 relative" title="Feedback">
-                        <MessageSquare size={14} style={{ color: '#f59e0b' }} />
-                        {(feedbackCounts[sub.id] || 0) > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: '#f59e0b', color: 'white', fontSize: '10px', fontWeight: '600' }}>
-                            {feedbackCounts[sub.id]}
-                          </span>
-                        )}
-                      </button>
-                    </div>
+                    {isCoach ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => { setStatusTarget(sub); setNewStatus(''); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 hover:shadow-md"
+                          style={{
+                            background: '#3b82f6',
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            border: 'none',
+                          }}
+                          title="Change submission status"
+                        >
+                          <Pencil size={12} />
+                          Status
+                          <ChevronDown size={12} />
+                        </button>
+                        <button
+                          onClick={() => openFeedbackModal(sub)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 hover:shadow-md relative"
+                          style={{
+                            background: '#f59e0b15',
+                            color: '#f59e0b',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            border: '1px solid #f59e0b30',
+                          }}
+                          title="View / add feedback"
+                        >
+                          <MessageSquare size={12} />
+                          Feedback
+                          {(feedbackCounts[sub.id] || 0) > 0 && (
+                            <span className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: '#f59e0b', color: 'white', fontSize: '10px', fontWeight: '600' }}>
+                              {feedbackCounts[sub.id]}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1">
+                        <button onClick={() => openFeedbackModal(sub)} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-amber-50 relative" title="Feedback">
+                          <MessageSquare size={14} style={{ color: '#f59e0b' }} />
+                          {(feedbackCounts[sub.id] || 0) > 0 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: '#f59e0b', color: 'white', fontSize: '10px', fontWeight: '600' }}>
+                              {feedbackCounts[sub.id]}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

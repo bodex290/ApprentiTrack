@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMyDashboard } from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 import { TrendingUp, FileText, Target, BookOpen, CheckCircle, Clock, Circle } from 'lucide-react';
@@ -31,6 +32,7 @@ interface DashboardData {
 }
 
 export default function MyDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
