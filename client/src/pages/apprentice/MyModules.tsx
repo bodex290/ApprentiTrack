@@ -78,7 +78,21 @@ export default function MyModules() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-
+  useEffect(() => {
+    getMyModules().then(r => {
+      setData(r.data);
+      // Auto-expand module from URL query param
+      const moduleParam = searchParams.get('module');
+      if (moduleParam) {
+        const id = Number(moduleParam);
+        if (r.data.modules.some((m: Module) => m.id === id)) {
+          setExpandedId(id);
+        }
+        // Clean up the URL param
+        setSearchParams({}, { replace: true });
+      }
+    }).finally(() => setLoading(false));
+  }, []);
 
   if (loading) return <LoadingScreen message="Loading modules..." />;
   if (!data) return <div className="p-8 text-gray-500">Failed to load modules.</div>;
